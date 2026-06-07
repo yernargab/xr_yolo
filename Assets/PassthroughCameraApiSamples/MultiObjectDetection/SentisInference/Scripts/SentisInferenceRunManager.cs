@@ -29,6 +29,10 @@ namespace PassthroughCameraSamples.MultiObjectDetection
         [Header("UI display references")]
         [SerializeField] private SentisInferenceUiManager m_uiInference;
 
+        [Header("[Optional] Benchmark Logging")]
+        [SerializeField] private bool m_enableBenchmarkLogging = true;
+        [SerializeField] private DetectionBenchmarkLogger m_benchmarkLogger;
+
         [Header("[Editor Only] Convert to Sentis")]
         public ModelAsset OnnxModel;
 
@@ -238,6 +242,20 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             m_engine = new Worker(model, m_backend);
 
             Debug.Log("Worker created successfully.");
+
+            if (m_enableBenchmarkLogging && m_benchmarkLogger == null)
+            {
+                m_benchmarkLogger = GetComponent<DetectionBenchmarkLogger>();
+                if (m_benchmarkLogger == null)
+                {
+                    m_benchmarkLogger = gameObject.AddComponent<DetectionBenchmarkLogger>();
+                }
+            }
+
+            if (m_enableBenchmarkLogging)
+            {
+                m_benchmarkLogger?.Initialize(m_sentisModel.name, m_backend.ToString(), m_outputMode.ToString());
+            }
         }
 
         private IEnumerator Start()
@@ -325,6 +343,7 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             TextureConverter.ToTensor(targetTexture, input, textureTransform);
 
             // Schedule all model layers
+            var inferenceStartTime = Time.realtimeSinceStartupAsDouble;
             m_engine.Schedule(input);
 
             // Get the results. ReadbackAndCloneAsync waits for all layers to complete before returning the result.
@@ -358,6 +377,7 @@ namespace PassthroughCameraSamples.MultiObjectDetection
                 using var boxes = boxesAwaiter.GetResult();
                 if (boxes.shape[0] == 0)
                 {
+                    RecordBenchmarkFrame(inferenceStartTime, 0);
                     yield break;
                 }
 
@@ -370,6 +390,7 @@ namespace PassthroughCameraSamples.MultiObjectDetection
                 if (classIDs.shape[0] == 0)
                 {
                     Debug.LogError("classIDs.shape[0] == 0");
+                    RecordBenchmarkFrame(inferenceStartTime, 0);
                     yield break;
                 }
 
@@ -382,11 +403,14 @@ namespace PassthroughCameraSamples.MultiObjectDetection
                 if (scores.shape[0] == 0)
                 {
                     Debug.LogError("scores.shape[0] == 0");
+                    RecordBenchmarkFrame(inferenceStartTime, 0);
                     yield break;
                 }
 
                 NonMaxSuppression(m_detections, boxes, classIDs, scores, m_iouThreshold, m_scoreThreshold);
             }
+
+            RecordBenchmarkFrame(inferenceStartTime, m_detections.Count);
 
             // Checking if spatial anchor is tracked ensures bounding boxes are placed at correct world space positIons.
             if (!m_cameraAccess.IsPlaying || m_detectionManager.m_spatialAnchor == null || !m_detectionManager.m_spatialAnchor.IsTracked)
@@ -396,6 +420,17 @@ namespace PassthroughCameraSamples.MultiObjectDetection
 
             // Update UI.
             m_uiInference.DrawUIBoxes(m_detections, m_inputSize, cachedCameraPose);
+        }
+
+        private void RecordBenchmarkFrame(double inferenceStartTime, int detectionCount)
+        {
+            if (m_benchmarkLogger == null)
+            {
+                return;
+            }
+
+            var inferenceLatencyMs = (Time.realtimeSinceStartupAsDouble - inferenceStartTime) * 1000d;
+            m_benchmarkLogger.RecordFrame(inferenceLatencyMs, detectionCount);
         }
 
         private static bool ParseYoloV8NmsOutput(List<(int classId, Vector4 boundingBox)> outDetections, Tensor<float> detections, float scoreThreshold)
