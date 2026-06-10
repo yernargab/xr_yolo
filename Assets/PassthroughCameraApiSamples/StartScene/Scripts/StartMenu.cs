@@ -21,7 +21,16 @@ namespace PassthroughCameraSamples.StartScene
         public OVRCameraRig VrRig;
         [SerializeField] private ModelAsset m_objectDetectionModel;
 
-        private void Awake() => SentisInferenceRunManager.PreloadModel(m_objectDetectionModel);
+        private void Awake()
+        {
+            if (m_objectDetectionModel == null)
+            {
+                Debug.LogWarning("StartMenu object detection model is not assigned. Skipping model preload so the scene menu can still open.");
+                return;
+            }
+
+            SentisInferenceRunManager.PreloadModel(m_objectDetectionModel);
+        }
 
         private void Start()
         {
