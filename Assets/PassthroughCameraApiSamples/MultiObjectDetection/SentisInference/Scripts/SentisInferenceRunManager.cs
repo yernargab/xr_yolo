@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using Meta.XR;
 using Meta.XR.Samples;
 using Unity.Collections;
@@ -23,11 +24,15 @@ namespace PassthroughCameraSamples.MultiObjectDetection
         [SerializeField] private BackendType m_backend = BackendType.CPU;
         [SerializeField] private ModelAsset m_sentisModel;
         [SerializeField] private TextAsset m_labelsAsset;
+        [SerializeField] private ModelComparisonOutputMode m_modelOutputMode = ModelComparisonOutputMode.Auto;
         [SerializeField, Range(0, 1)] private float m_iouThreshold = 0.6f;
         [SerializeField, Range(0, 1)] private float m_scoreThreshold = 0.23f;
 
         [Header("UI display references")]
         [SerializeField] private SentisInferenceUiManager m_uiInference;
+
+        [Header("[Optional] Runtime Model Comparison")]
+        [SerializeField] private ModelComparisonModeController m_modelComparisonModeController;
 
         [Header("[Optional] Benchmark Logging")]
         [SerializeField] private bool m_enableBenchmarkLogging = true;
@@ -46,6 +51,8 @@ namespace PassthroughCameraSamples.MultiObjectDetection
         private Worker m_engine;
         private Vector2Int m_inputSize;
         private ModelOutputMode m_outputMode;
+        private int m_loadedOutputCount;
+        private string m_activeModelName;
         private readonly List<(int classId, Vector4 boundingBox)> m_detections = new List<(int classId, Vector4 boundingBox)>();
 
 
@@ -190,47 +197,274 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             return false;
         }
 
-        private void Awake()
+        private IEnumerator InitializeRuntimeMode()
         {
+            yield return null;
+
+            m_modelComparisonModeController = ResolveModelComparisonModeController();
+
+            if (m_modelComparisonModeController != null && m_modelComparisonModeController.IsDeveloperComparisonMode)
+            {
+                Debug.Log(
+                    "SentisInferenceRunManager detected DeveloperComparisonMode on " +
+                    m_modelComparisonModeController.GetHierarchyPath() +
+                    ". Default Inspector model load skipped.");
+                m_modelComparisonModeController.BeginSelection(this);
+                yield break;
+            }
+
+            if (m_modelComparisonModeController != null)
+            {
+                Debug.Log(
+                    "SentisInferenceRunManager detected DefaultSampleMode on " +
+                    m_modelComparisonModeController.GetHierarchyPath() +
+                    ". Loading Inspector-assigned model.");
+            }
+            else
+            {
+                Debug.LogWarning("SentisInferenceRunManager found no ModelComparisonModeController. Loading Inspector-assigned model.");
+            }
+
+            _ = LoadModelFromCurrentSettings(m_sentisModel != null ? m_sentisModel.name : null);
+        }
+
+        private ModelComparisonModeController ResolveModelComparisonModeController()
+        {
+            var allControllers = FindObjectsByType<ModelComparisonModeController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (allControllers.Length > 1)
+            {
+                LogMultipleModelComparisonControllers(allControllers);
+            }
+
+            ModelComparisonModeController ignoredAssignedController = null;
+            if (m_modelComparisonModeController != null && !IsLiveModelComparisonController(m_modelComparisonModeController))
+            {
+                ignoredAssignedController = m_modelComparisonModeController;
+                m_modelComparisonModeController = null;
+            }
+
+            var sameGameObject = GetComponent<ModelComparisonModeController>();
+            if (TryResolveLiveModelComparisonController(sameGameObject, "same live GameObject", out var resolvedController))
+            {
+                LogIgnoredAssignedModelComparisonController(ignoredAssignedController);
+                return resolvedController;
+            }
+
+            var parent = GetComponentInParent<ModelComparisonModeController>(true);
+            if (TryResolveLiveModelComparisonController(parent, "parent hierarchy", out resolvedController))
+            {
+                LogIgnoredAssignedModelComparisonController(ignoredAssignedController);
+                return resolvedController;
+            }
+
+            var child = GetComponentInChildren<ModelComparisonModeController>(true);
+            if (TryResolveLiveModelComparisonController(child, "child hierarchy", out resolvedController))
+            {
+                LogIgnoredAssignedModelComparisonController(ignoredAssignedController);
+                return resolvedController;
+            }
+
+            for (var i = 0; i < allControllers.Length; i++)
+            {
+                if (TryResolveLiveModelComparisonController(allControllers[i], "scene-wide fallback", out resolvedController))
+                {
+                    LogIgnoredAssignedModelComparisonController(ignoredAssignedController);
+                    return resolvedController;
+                }
+            }
+
+            LogIgnoredAssignedModelComparisonController(ignoredAssignedController);
+            return null;
+        }
+
+        private bool TryResolveLiveModelComparisonController(
+            ModelComparisonModeController controller,
+            string source,
+            out ModelComparisonModeController resolvedController)
+        {
+            resolvedController = null;
+            if (!IsLiveModelComparisonController(controller))
+            {
+                return false;
+            }
+
+            m_modelComparisonModeController = controller;
+            resolvedController = controller;
+            LogResolvedLiveModelComparisonController(source, controller);
+            return true;
+        }
+
+        private static bool IsLiveModelComparisonController(ModelComparisonModeController controller)
+        {
+            if (controller == null)
+            {
+                return false;
+            }
+
+            var scene = controller.gameObject.scene;
+            return scene.IsValid() && scene.isLoaded;
+        }
+
+        private void LogMultipleModelComparisonControllers(ModelComparisonModeController[] controllers)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("Multiple ModelComparisonModeController components found. SentisInferenceRunManager will prefer the same live GameObject, then parent, child, then scene-wide fallback.");
+            for (var i = 0; i < controllers.Length; i++)
+            {
+                var controller = controllers[i];
+                builder
+                    .Append(" - ")
+                    .Append(controller.gameObject.name)
+                    .Append(" | scene: ")
+                    .Append(GetSceneNameForLog(controller))
+                    .Append(" | scene valid: ")
+                    .Append(controller.gameObject.scene.IsValid())
+                    .Append(" | scene loaded: ")
+                    .Append(controller.gameObject.scene.isLoaded)
+                    .Append(" | hierarchy: ")
+                    .Append(controller.GetHierarchyPath())
+                    .Append(" | mode: ")
+                    .Append(controller.Mode)
+                    .AppendLine();
+            }
+
+            Debug.LogWarning(builder.ToString());
+        }
+
+        private void LogResolvedLiveModelComparisonController(string source, ModelComparisonModeController controller)
+        {
+            Debug.Log(
+                "Resolved live ModelComparisonModeController" +
+                " | object: " + controller.gameObject.name +
+                " | scene: " + controller.gameObject.scene.name +
+                " | hierarchy: " + controller.GetHierarchyPath() +
+                " | mode: " + controller.Mode +
+                " | source: " + source);
+        }
+
+        private static void LogIgnoredAssignedModelComparisonController(ModelComparisonModeController controller)
+        {
+            if (controller == null)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "Ignoring assigned ModelComparisonModeController because it is not a live loaded scene object" +
+                " | object: " + controller.gameObject.name +
+                " | scene: " + GetSceneNameForLog(controller) +
+                " | scene valid: " + controller.gameObject.scene.IsValid() +
+                " | scene loaded: " + controller.gameObject.scene.isLoaded +
+                " | mode: " + controller.Mode);
+        }
+
+        private static string GetSceneNameForLog(ModelComparisonModeController controller)
+        {
+            var scene = controller.gameObject.scene;
+            return string.IsNullOrEmpty(scene.name) ? "<empty>" : scene.name;
+        }
+
+        public bool ApplyModelProfile(ModelComparisonProfile profile)
+        {
+            if (profile == null)
+            {
+                Debug.LogError("Cannot apply model profile: profile is null.");
+                return false;
+            }
+
+            if (profile.SentisModel == null)
+            {
+                Debug.LogError("Cannot apply model profile '" + profile.BenchmarkName + "': Sentis model is not assigned.");
+                return false;
+            }
+
+            m_sentisModel = profile.SentisModel;
+            if (profile.LabelsAsset != null)
+            {
+                m_labelsAsset = profile.LabelsAsset;
+            }
+            else
+            {
+                Debug.LogWarning("Model profile '" + profile.BenchmarkName + "' has no labels asset. Keeping the currently assigned labels asset.");
+            }
+
+            m_modelOutputMode = profile.OutputMode;
+            m_backend = profile.Backend;
+            m_iouThreshold = profile.IouThreshold;
+            m_scoreThreshold = profile.ScoreThreshold;
+
+            Debug.Log("Selected model profile: " + profile.BenchmarkName);
+            Debug.Log("Using output mode: " + m_modelOutputMode);
+            return LoadModelFromCurrentSettings(profile.BenchmarkName, true);
+        }
+
+        public void StartDetectionFromComparisonMode()
+        {
+            if (m_engine == null)
+            {
+                Debug.LogWarning("Cannot start detection from comparison mode before a model worker is ready.");
+                return;
+            }
+
+            if (m_uiMenuManager == null)
+            {
+                Debug.LogWarning("Cannot start detection from comparison mode because DetectionUiMenuManager is not assigned.");
+                return;
+            }
+
+            m_uiMenuManager.StartDetectionFromExternalUi();
+        }
+
+        public void SetComparisonSelectionActive(bool active)
+        {
+            if (m_uiMenuManager == null)
+            {
+                Debug.LogWarning("Cannot update comparison selection UI state because DetectionUiMenuManager is not assigned.");
+                return;
+            }
+
+            m_uiMenuManager.SetExternalSelectionActive(active);
+        }
+
+        private bool LoadModelFromCurrentSettings(string activeModelName, bool allowDeveloperComparisonLoad = false)
+        {
+            if (m_modelComparisonModeController != null &&
+                m_modelComparisonModeController.IsDeveloperComparisonMode &&
+                !allowDeveloperComparisonLoad)
+            {
+                Debug.LogError("DeveloperComparisonMode safety check blocked default Inspector model load before runtime model selection.");
+                return false;
+            }
+
             if (m_sentisModel == null)
             {
                 Debug.LogError("m_sentisModel is NULL. Assign a generated .sentis / ModelAsset before running.");
-                return;
+                return false;
             }
 
             DebugInspectModels();
 
-            var model = ModelLoader.Load(m_sentisModel);
+            Model model;
+            try
+            {
+                model = ModelLoader.Load(m_sentisModel);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Failed to load Sentis model: " + m_sentisModel.name);
+                Debug.LogException(e);
+                return false;
+            }
 
             if (model.inputs.Count == 0)
             {
                 Debug.LogError("Loaded Sentis model has no inputs.");
-                return;
+                return false;
             }
 
-            if (model.outputs.Count == 3)
+            if (!TryResolveOutputMode(model, out var resolvedOutputMode))
             {
-                m_outputMode = ModelOutputMode.MetaSampleThreeOutputs;
-                Debug.Log("Runtime output mode: Meta sample 3-output format: boxes, class IDs, scores.");
-            }
-            else if (model.outputs.Count == 1)
-            {
-                if (TryGetModelOutputShape(model, 0, out var outputShape) && !IsYoloV8NmsShape(outputShape))
-                {
-                    Debug.LogError("Loaded single-output Sentis model shape is " + outputShape + ". Expected YOLOv8 NMS shape [1, 300, 6].");
-                    return;
-                }
-
-                m_outputMode = ModelOutputMode.YoloV8NmsSingleOutput;
-                Debug.Log("Runtime output mode: YOLOv8 NMS single-output format. Expected tensor shape at runtime: [1, 300, 6].");
-            }
-            else
-            {
-                Debug.LogError(
-                    "Loaded Sentis model output count is " + model.outputs.Count +
-                    ". Supported formats are exactly 3 outputs for the Meta sample, or 1 YOLOv8 NMS output with shape [1, 300, 6]."
-                );
-                return;
+                return false;
             }
 
             var inputShape = model.inputs[0].shape;
@@ -239,28 +473,45 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             Debug.Log("Runtime input size: " + m_inputSize);
             Debug.Log("Creating worker...");
 
-            m_engine = new Worker(model, m_backend);
-
-            Debug.Log("Worker created successfully.");
-
-            if (m_enableBenchmarkLogging && m_benchmarkLogger == null)
+            Worker newEngine;
+            try
             {
-                m_benchmarkLogger = GetComponent<DetectionBenchmarkLogger>();
-                if (m_benchmarkLogger == null)
-                {
-                    m_benchmarkLogger = gameObject.AddComponent<DetectionBenchmarkLogger>();
-                }
+                newEngine = new Worker(model, m_backend);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Failed to create Sentis worker for model: " + m_sentisModel.name);
+                Debug.LogException(e);
+                return false;
             }
 
-            if (m_enableBenchmarkLogging)
-            {
-                m_benchmarkLogger?.Initialize(m_sentisModel.name, m_backend.ToString(), m_outputMode.ToString());
-            }
+            DisposeWorker();
+
+            m_engine = newEngine;
+            m_outputMode = resolvedOutputMode;
+            m_loadedOutputCount = model.outputs.Count;
+            m_activeModelName = string.IsNullOrWhiteSpace(activeModelName) ? m_sentisModel.name : activeModelName;
+
+            ApplyLabelsToUi();
+            InitializeBenchmarkLogger();
+
+            Debug.Log(
+                "Worker created successfully. Selected model: " + m_activeModelName +
+                " | Sentis asset: " + m_sentisModel.name +
+                " | backend: " + m_backend +
+                " | output mode: " + m_outputMode);
+
+            return true;
         }
 
         private IEnumerator Start()
         {
-            m_uiInference.SetLabels(m_labelsAsset);
+            yield return InitializeRuntimeMode();
+
+            while (m_engine == null || IsWaitingForComparisonSelection())
+            {
+                yield return null;
+            }
 
             while (true)
             {
@@ -274,18 +525,127 @@ namespace PassthroughCameraSamples.MultiObjectDetection
 
         private void OnDestroy()
         {
+            DisposeWorker();
+        }
+
+        private bool IsWaitingForComparisonSelection()
+        {
+            return m_modelComparisonModeController != null &&
+                   m_modelComparisonModeController.IsDeveloperComparisonMode &&
+                   !m_modelComparisonModeController.HasSelectedProfile;
+        }
+
+        private bool TryResolveOutputMode(Model model, out ModelOutputMode resolvedOutputMode)
+        {
+            resolvedOutputMode = ModelOutputMode.MetaSampleThreeOutputs;
+
+            if (m_modelOutputMode == ModelComparisonOutputMode.Auto)
+            {
+                if (model.outputs.Count == 3)
+                {
+                    resolvedOutputMode = ModelOutputMode.MetaSampleThreeOutputs;
+                }
+                else if (model.outputs.Count == 1)
+                {
+                    resolvedOutputMode = ModelOutputMode.YoloV8NmsSingleOutput;
+                }
+            }
+            else if (m_modelOutputMode == ModelComparisonOutputMode.MetaSampleRawOutput)
+            {
+                resolvedOutputMode = ModelOutputMode.MetaSampleThreeOutputs;
+            }
+            else if (m_modelOutputMode == ModelComparisonOutputMode.YoloNmsSingleOutput)
+            {
+                resolvedOutputMode = ModelOutputMode.YoloV8NmsSingleOutput;
+            }
+
+            if (resolvedOutputMode == ModelOutputMode.MetaSampleThreeOutputs)
+            {
+                if (model.outputs.Count != 3)
+                {
+                    Debug.LogError("Model output mode is MetaSampleRawOutput, but loaded model output count is " + model.outputs.Count + ".");
+                    return false;
+                }
+
+                Debug.Log("Runtime output mode: Meta sample 3-output format: boxes, class IDs, scores.");
+                return true;
+            }
+
+            if (resolvedOutputMode == ModelOutputMode.YoloV8NmsSingleOutput)
+            {
+                if (model.outputs.Count != 1)
+                {
+                    Debug.LogError("Model output mode is YoloNmsSingleOutput, but loaded model output count is " + model.outputs.Count + ".");
+                    return false;
+                }
+
+                if (TryGetModelOutputShape(model, 0, out var outputShape) && !IsYoloV8NmsShape(outputShape))
+                {
+                    Debug.LogError("Loaded single-output Sentis model shape is " + outputShape + ". Expected YOLOv8 NMS shape [1, 300, 6].");
+                    return false;
+                }
+
+                Debug.Log("Runtime output mode: YOLOv8 NMS single-output format. Expected tensor shape at runtime: [1, 300, 6].");
+                return true;
+            }
+
+            Debug.LogError(
+                "Loaded Sentis model output count is " + model.outputs.Count +
+                ". Supported formats are exactly 3 outputs for the Meta sample, or 1 YOLOv8 NMS output with shape [1, 300, 6]."
+            );
+            return false;
+        }
+
+        private void ApplyLabelsToUi()
+        {
+            if (m_uiInference == null)
+            {
+                return;
+            }
+
+            if (m_labelsAsset == null)
+            {
+                Debug.LogError("Labels asset is NULL. Detection UI labels cannot be updated.");
+                return;
+            }
+
+            m_uiInference.SetLabels(m_labelsAsset);
+        }
+
+        private void InitializeBenchmarkLogger()
+        {
+            if (!m_enableBenchmarkLogging)
+            {
+                return;
+            }
+
+            if (m_benchmarkLogger == null)
+            {
+                m_benchmarkLogger = GetComponent<DetectionBenchmarkLogger>();
+                if (m_benchmarkLogger == null)
+                {
+                    m_benchmarkLogger = gameObject.AddComponent<DetectionBenchmarkLogger>();
+                }
+            }
+
+            m_benchmarkLogger?.Initialize(m_activeModelName, m_backend.ToString(), m_outputMode.ToString());
+        }
+
+        private void DisposeWorker()
+        {
             if (m_engine == null)
             {
                 return;
             }
 
-            m_engine.PeekOutput(0)?.CompleteAllPendingOperations();
-            if (m_outputMode == ModelOutputMode.MetaSampleThreeOutputs)
+            for (var i = 0; i < m_loadedOutputCount; i++)
             {
-                m_engine.PeekOutput(1)?.CompleteAllPendingOperations();
-                m_engine.PeekOutput(2)?.CompleteAllPendingOperations();
+                m_engine.PeekOutput(i)?.CompleteAllPendingOperations();
             }
+
             m_engine.Dispose();
+            m_engine = null;
+            m_loadedOutputCount = 0;
         }
 
         internal static void PreloadModel(ModelAsset modelAsset)

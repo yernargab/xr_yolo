@@ -10,6 +10,7 @@ Library: /Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8
 --target-framework=NetFramework
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/Users/yernar/Documents/xr_yolo/Temp/Burst
+--debug=Full
 --key-folder=/Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/AndroidPlayer
 --decode-folder=/Users/yernar/Documents/xr_yolo/Library/Burst
 --output=/Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8a/lib_burst_generated
@@ -126,6 +127,7 @@ Library: /Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8
 --target-framework=NetFramework
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/Users/yernar/Documents/xr_yolo/Temp/Burst
+--debug=Full
 --key-folder=/Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/AndroidPlayer
 --decode-folder=/Users/yernar/Documents/xr_yolo/Library/Burst
 --output=/Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8a/lib_burst_generated
@@ -144,6 +146,7 @@ Library: /Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8
 --float-mode=Fast
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/Users/yernar/Documents/xr_yolo/Temp/Burst
+--debug=Full
 --key-folder=/Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/AndroidPlayer
 --decode-folder=/Users/yernar/Documents/xr_yolo/Library/Burst
 --output=/Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8a/lib_burst_generated
@@ -162,6 +165,7 @@ Library: /Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8
 --float-mode=Fast
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/Users/yernar/Documents/xr_yolo/Temp/Burst
+--debug=Full
 --key-folder=/Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/AndroidPlayer
 --decode-folder=/Users/yernar/Documents/xr_yolo/Library/Burst
 --output=/Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8a/lib_burst_generated
@@ -236,6 +240,7 @@ Library: /Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8
 --target-framework=NetFramework
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/Users/yernar/Documents/xr_yolo/Temp/Burst
+--debug=Full
 --key-folder=/Applications/Unity/Hub/Editor/6000.3.10f1/PlaybackEngines/AndroidPlayer
 --decode-folder=/Users/yernar/Documents/xr_yolo/Library/Burst
 --output=/Users/yernar/Documents/xr_yolo/Temp/BurstOutput/tempburstlibs/arm64-v8a/lib_burst_generated

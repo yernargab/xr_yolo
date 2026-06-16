@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 7913708705614608778}
   - component: {fileID: 2681575481727882275}
   - component: {fileID: 2184060436030677583}
+  - component: {fileID: 630000000000000001}
   m_Layer: 0
   m_Name: SentisInferenceManagerPrefab
   m_TagString: Untagged
@@ -128,9 +129,11 @@ MonoBehaviour:
   m_backend: 512
   m_sentisModel: {fileID: 5022602860645237092, guid: 69ab50aef18ae412cac4b305492d527c, type: 3}
   m_labelsAsset: {fileID: 4900000, guid: c01c64149c7930b45a76559caabd5c78, type: 3}
+  m_modelOutputMode: 0
   m_iouThreshold: 0.4
   m_scoreThreshold: 0.3
   m_uiInference: {fileID: 2184060436030677583}
+  m_modelComparisonModeController: {fileID: 0}
   OnnxModel: {fileID: 5022602860645237092, guid: e61826a46beb24bb380fd628c56eacaa, type: 3}
 --- !u!114 &2184060436030677583
 MonoBehaviour:
@@ -160,9 +163,25 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
+        m_StringArgument: 
+        m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &630000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5228241647023865434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eff8e04f4d0348eb83611bf6420a4d36, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_mode: 0
+  m_registry: {fileID: 11400000, guid: dd970c98c2434a6d8da8dac996ed088f, type: 2}
+  m_selectionUi: {fileID: 0}
+  m_autoCreateSelectionUi: 1
 --- !u!1 &6084563377589222848
 GameObject:
   m_ObjectHideFlags: 0

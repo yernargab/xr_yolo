@@ -1960,6 +1960,18 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 1744462754}
+    - target: {fileID: 630000000000000001, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
+      propertyPath: m_mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 630000000000000001, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
+      propertyPath: m_registry
+      value: 
+      objectReference: {fileID: 11400000, guid: dd970c98c2434a6d8da8dac996ed088f, type: 2}
+    - target: {fileID: 630000000000000001, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
+      propertyPath: m_autoCreateSelectionUi
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2184060436030677583, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_cameraAccess
       value: 
@@ -1979,11 +1991,11 @@ PrefabInstance:
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: OnnxModel
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: 21d2bc6571d264b3199f851171a2523b, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: 4f658bd68c487481aad0bbdb7da53ff6, type: 3}
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_sentisModel
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: 8f7cb09c7fd444f4fb291eb6047b7b40, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: f950eeea258414d88884b7f15725383f, type: 3}
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_cameraAccess
       value: 
@@ -1993,9 +2005,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 6846995557286463107}
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
+      propertyPath: m_modelOutputMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_detectionManager
       value: 
       objectReference: {fileID: 1542092273}
+    - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
+      propertyPath: m_modelComparisonModeController
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5228241647023865434, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_Name
       value: SentisInferenceManagerPrefab

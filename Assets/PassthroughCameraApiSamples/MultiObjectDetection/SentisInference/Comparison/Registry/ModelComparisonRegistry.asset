@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2af1dd09049441c5ae3de7f7415f9eaa, type: 3}
+  m_Name: ModelComparisonRegistry
+  m_EditorClassIdentifier:
+  m_profiles:
+  - m_displayName: YOLOv9 Meta Sample
+    m_modelTypeName: Meta YOLOv9 baseline, COCO 80
+    m_sentisModel: {fileID: 5022602860645237092, guid: f950eeea258414d88884b7f15725383f, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: 4f658bd68c487481aad0bbdb7da53ff6, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolov9_meta_sample.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolov9_meta_sample_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/coco_80_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: ab76bf670a73346c2a4fad88ca792ee6, type: 3}
+    m_outputMode: 1
+    m_inputSize: {x: 640, y: 640}
+    m_backend: 512
+    m_iouThreshold: 0.4
+    m_scoreThreshold: 0.3
+    m_notes: Classes: COCO 80. Uses the Meta sample raw 3-output parser.
+  - m_displayName: YOLO26n COCO FP16
+    m_modelTypeName: YOLO26n COCO NMS FP16, COCO 80
+    m_sentisModel: {fileID: 5022602860645237092, guid: 058bf4d6d819443e0b399eb7d502b79d, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: 0db5ca544d3d34ed59de72d8355fcdf1, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolo26n_coco_pretrained_416_nms_fp16.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolo26n_coco_pretrained_416_nms_fp16_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/coco_80_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: ab76bf670a73346c2a4fad88ca792ee6, type: 3}
+    m_outputMode: 2
+    m_inputSize: {x: 416, y: 416}
+    m_backend: 512
+    m_iouThreshold: 0.45
+    m_scoreThreshold: 0.25
+    m_notes: Classes: COCO 80. Expected NMS output shape [1, 300, 6].
+  - m_displayName: YOLO26s COCO FP16
+    m_modelTypeName: YOLO26s COCO NMS FP16, COCO 80
+    m_sentisModel: {fileID: 5022602860645237092, guid: e2dfc86ebe9f54587a89757190f8aad1, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: 0c3557fbf7bc74a7f9a675529bc66298, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolo26s_coco_pretrained_416_nms_fp16.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolo26s_coco_pretrained_416_nms_fp16_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/coco_80_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: ab76bf670a73346c2a4fad88ca792ee6, type: 3}
+    m_outputMode: 2
+    m_inputSize: {x: 416, y: 416}
+    m_backend: 512
+    m_iouThreshold: 0.45
+    m_scoreThreshold: 0.25
+    m_notes: Classes: COCO 80. Expected NMS output shape [1, 300, 6].
+  - m_displayName: YOLO26n EgoObjects 30cls FP16
+    m_modelTypeName: YOLO26n EgoObjects NMS FP16, EgoObjects 30
+    m_sentisModel: {fileID: 5022602860645237092, guid: 9e8ff7f63178a47309482d6522aafd44, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: 6ac0ac1b94a444b4899a94eb8f4a4227, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolo26n_egoobjects_30cls_416_nms_fp16.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolo26n_egoobjects_30cls_416_nms_fp16_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/egoobjects_30_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: 08b5a08dab39246b68e12fe773dafb44, type: 3}
+    m_outputMode: 2
+    m_inputSize: {x: 416, y: 416}
+    m_backend: 512
+    m_iouThreshold: 0.45
+    m_scoreThreshold: 0.25
+    m_notes: Classes: EgoObjects 30. Expected NMS output shape [1, 300, 6].
+  - m_displayName: YOLOv8n VOC FP16
+    m_modelTypeName: YOLOv8n VOC NMS FP16, VOC 20
+    m_sentisModel: {fileID: 5022602860645237092, guid: 2cc86256504a942d19a457d82b8c9675, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: 35fb2a7dbc5854613ad3c33f138fd59a, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolov8n_voc_416_50epochs_nms_fp16.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolov8n_voc_416_50epochs_nms_fp16_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/voc_20_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: 03735571a537544f6bd0f62e1a98ac13, type: 3}
+    m_outputMode: 2
+    m_inputSize: {x: 416, y: 416}
+    m_backend: 512
+    m_iouThreshold: 0.45
+    m_scoreThreshold: 0.25
+    m_notes: Classes: VOC 20. Expected NMS output shape [1, 300, 6].
+  - m_displayName: YOLOv8n COCO FP16
+    m_modelTypeName: YOLOv8n COCO NMS FP16, COCO 80
+    m_sentisModel: {fileID: 5022602860645237092, guid: f6cd9bcfb058447c2bedcca0d6619aae, type: 3}
+    m_onnxModel: {fileID: 5022602860645237092, guid: a4f45ac1c45014461bba202706da8603, type: 3}
+    m_runtimeOnnxPath:
+    m_expectedOnnxPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Onnx/yolov8n_coco_pretrained_416_nms_fp16.onnx
+    m_expectedSentisPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Sentis/yolov8n_coco_pretrained_416_nms_fp16_sentis.sentis
+    m_expectedLabelsPath: Assets/PassthroughCameraApiSamples/MultiObjectDetection/SentisInference/Comparison/Labels/coco_80_classes.txt
+    m_labelsAsset: {fileID: 4900000, guid: ab76bf670a73346c2a4fad88ca792ee6, type: 3}
+    m_outputMode: 2
+    m_inputSize: {x: 416, y: 416}
+    m_backend: 512
+    m_iouThreshold: 0.45
+    m_scoreThreshold: 0.25
+    m_notes: Classes: COCO 80. Expected NMS output shape [1, 300, 6].

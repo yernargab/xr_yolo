@@ -29,6 +29,8 @@ namespace PassthroughCameraSamples.MultiObjectDetection
 
         // pause menu
         public bool IsPaused { get; private set; } = true;
+        private bool m_externalSelectionActive;
+        private bool m_permissionsReady;
 
         #region Unity Functions
         private IEnumerator Start()
@@ -43,6 +45,7 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             {
                 yield return null;
             }
+            m_permissionsReady = true;
             OnInitialMenu();
         }
 
@@ -61,6 +64,12 @@ namespace PassthroughCameraSamples.MultiObjectDetection
         #region Ui state: No permissions Menu
         private void OnNoPermissionMenu()
         {
+            if (m_externalSelectionActive)
+            {
+                HideAllPanels();
+                return;
+            }
+
             m_initialMenu = false;
             IsPaused = true;
             m_initialPanel.SetActive(false);
@@ -72,6 +81,12 @@ namespace PassthroughCameraSamples.MultiObjectDetection
 
         private void OnInitialMenu()
         {
+            if (m_externalSelectionActive)
+            {
+                HideAllPanels();
+                return;
+            }
+
             m_initialMenu = true;
             IsPaused = true;
             m_initialPanel.SetActive(true);
@@ -84,6 +99,61 @@ namespace PassthroughCameraSamples.MultiObjectDetection
             {
                 OnPauseMenu(false);
             }
+        }
+
+        public void StartDetectionFromExternalUi()
+        {
+            if (!m_permissionsReady)
+            {
+                Debug.LogWarning("DetectionUiMenuManager cannot start detection yet because permissions are not ready.");
+                return;
+            }
+
+            if (!IsPaused)
+            {
+                return;
+            }
+
+            if (!m_initialMenu && !m_externalSelectionActive)
+            {
+                Debug.LogWarning("DetectionUiMenuManager cannot start detection yet because the initial menu is not ready.");
+                return;
+            }
+
+            SetExternalSelectionActive(false);
+            OnPauseMenu(false);
+        }
+
+        public void SetExternalSelectionActive(bool active)
+        {
+            m_externalSelectionActive = active;
+            IsPaused = true;
+            m_initialMenu = false;
+
+            if (active)
+            {
+                HideAllPanels();
+                if (m_labelInformation != null)
+                {
+                    m_labelInformation.gameObject.SetActive(false);
+                }
+                Debug.Log("Normal detection UI hidden while Developer Comparison model selection is active.");
+            }
+            else
+            {
+                if (m_labelInformation != null)
+                {
+                    m_labelInformation.gameObject.SetActive(true);
+                }
+                Debug.Log("Normal detection UI shown/resumed after Developer Comparison model selection.");
+            }
+        }
+
+        private void HideAllPanels()
+        {
+            m_initialPanel.SetActive(false);
+            m_noPermissionPanel.SetActive(false);
+            m_loadingPanel.SetActive(false);
         }
 
         private void OnPauseMenu(bool visible)
