@@ -1991,7 +1991,7 @@ PrefabInstance:
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: OnnxModel
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: 4f658bd68c487481aad0bbdb7da53ff6, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: fcd55d790d7f247cb9712036e56ca255, type: 3}
     - target: {fileID: 2681575481727882275, guid: 927c1b782bb796b4b9b433d533cbccca, type: 3}
       propertyPath: m_sentisModel
       value: 
